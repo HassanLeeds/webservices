@@ -56,7 +56,7 @@ class APIClient:
         url = f"{self.base_url}/logout/"
         response = self.make_request("delete", url)
         
-        # Regardless of server response, clear local authentication data
+        # clear local authentication data
         self.token = None
         self.username = None
         if "Authorization" in self.session.headers:
@@ -524,7 +524,7 @@ def main():
                     elif "error" in response:
                         error_message = response.get('error')
                         
-                    print(f"WARNING: {error_message}, but you've been logged out locally")
+                    print(f"WARNING: {error_message}, you've only been logged out locally")
                 
                 logged_in = False
 

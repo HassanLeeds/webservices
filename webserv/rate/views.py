@@ -200,10 +200,10 @@ def rate_professor(request):
     # Find the module instance
     try:
         module = Module.objects.get(code=module_code)
-        module_instance = Module_instance.objects.get(mod=module, year=year, sem=semester)
+        module_instance = Module_instance.objects.get(module=module, year=year, sem=semester)
         
         # Verify professor teaches the specified module instance
-        if not module_instance.prof.filter(id=prof_id).exists():
+        if not module_instance.professor.filter(id=prof_id).exists():
             return Response(
                 {"error": f"Professor {prof_id} does not teach module {module_code} in year {year}, semester {semester}"},
                 status=status.HTTP_400_BAD_REQUEST
@@ -314,12 +314,12 @@ def average(request):
         return Response({"error": f"Module with code {module_code} not found"}, status=status.HTTP_404_NOT_FOUND)
     
     # Get all instance of the module
-    module_instances = Module_instance.objects.filter(mod=module)
+    module_instances = Module_instance.objects.filter(module=module)
     
     # Check if professor teaches this module
     teaches_module = False
     for module_instance in module_instances:
-        if module_instance.prof.filter(id=prof_id).exists():
+        if module_instance.professor.filter(id=prof_id).exists():
             teaches_module = True
             break
     

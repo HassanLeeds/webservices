@@ -33,7 +33,6 @@ class Rating (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     
     class Meta:
-        # Ensure a user can only rate a specific professor for a specific module instance once
         unique_together = ('user', 'professor', 'module')
 
 
