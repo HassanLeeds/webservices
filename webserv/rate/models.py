@@ -36,6 +36,7 @@ class Rating (models.Model):
         unique_together = ('user', 'professor', 'module')
 
     def __str__ (self):
-        return f"{self.module.code} {self.professor.id} {self.stars}"
+        # module.module.code, because first module is actually module instance
+        return f"{self.module.module.code} {self.professor.id} {self.stars}"
 
 

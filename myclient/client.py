@@ -153,12 +153,12 @@ def register(api_client, verbose=False):
     # Handle all responses and errors
 
     if response.get("status_code") == 201:
-        print(f"SUCCESS: {response.get('data', {}).get('message', 'Registration successful')}")
+        print(f"{response.get('data', {}).get('message', 'Registration successful')}")
         return True
     else:
         error_message = "Registration failed"
 
-        # Try to extract error message from response
+        # Try to extract error message from response:
         if isinstance(response.get("data"), dict) and "error" in response.get("data", {}):
             error_message = response.get("data", {}).get("error")
         elif "error" in response:
