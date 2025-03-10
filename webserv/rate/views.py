@@ -274,7 +274,7 @@ def view(request):
         avg_rating = 0
         if ratings.exists():
             avg_rating = sum(rating.stars for rating in ratings) / ratings.count()
-        if rating.count() > 0:
+        if avg_rating != 0:
             avg_rating = round(avg_rating)
 
         # Make response
