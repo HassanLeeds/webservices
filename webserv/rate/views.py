@@ -121,7 +121,7 @@ def list_modules(request):
     
     for instance in module_instances:
         # Get all professors teaching this module instance
-        professors = instance.prof.all()
+        professors = insstance.prof.all()
         prof_info = [{"id": prof.id, "name": prof.name} for prof in professors]
         
         # Format module data for response message
