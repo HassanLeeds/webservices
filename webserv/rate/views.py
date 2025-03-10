@@ -357,7 +357,7 @@ def average(request):
     if rating_count > 0:
         avg_rating = sum_rating / rating_count
 
-    if rating.count() > 0:
+    if average != None:
             avg_rating = round(avg_rating)
 
     return Response({
