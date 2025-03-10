@@ -114,7 +114,7 @@ def logout(request):
 @api_view(["GET"])
 def list_modules(request):
     # Query all module instances with their associated modules and professors
-    module_instances = Module_instance.objects.all().select_related('mod')
+    module_instances = Module_instance.objects.all().select_related('module')
     
     # Prepare response data
     module_list = []
@@ -126,8 +126,8 @@ def list_modules(request):
         
         # Format module data for response message
         module_data = {
-            "code": instance.mod.code,
-            "description": instance.mod.desc,
+            "code": instance.module.code,
+            "description": instance.module.desc,
             "year": instance.year,
             "semester": instance.sem,
             "professors": prof_info
