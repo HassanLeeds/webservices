@@ -23,7 +23,7 @@ class Module_instance (models.Model):
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
     
     def __str__ (self):
-        return f"{self.mod.code} {self.year} {self.sem}"
+        return f"{self.module.code} {self.year} {self.sem}"
 
 
 class Rating (models.Model):
@@ -34,5 +34,8 @@ class Rating (models.Model):
     
     class Meta:
         unique_together = ('user', 'professor', 'module')
+
+    def __str__ (self):
+        return f"{self.module.code} {self.professor.id} {self.stars}"
 
 
