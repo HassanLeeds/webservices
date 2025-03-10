@@ -270,11 +270,10 @@ def view(request):
         # Get all ratings for this professor
         ratings = Rating.objects.filter(professor=professor)
         
-        # Calculate average rating and round to nearest integer
+        # Calculate average rating
         avg_rating = 0
         if ratings.exists():
             avg_rating = sum(rating.stars for rating in ratings) / ratings.count()
-        avg_rating = round(avg_rating)
 
         # Make response
         professor_ratings.append({
@@ -352,10 +351,9 @@ def average(request):
     # If no ratings return None as average rating
     avg_rating = None
 
-    # Get average rating and round to nearest integer
+    # Get average rating
     if rating_count > 0:
         avg_rating = sum_rating / rating_count
-    avg_rating = round(avg_rating)
 
     return Response({
         "professor": {
