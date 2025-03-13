@@ -4,6 +4,7 @@ import sys
 import getpass
 import json
 import time
+import math
 
 URL = "https://sc22hn.pythonanywhere.com/api"
 
@@ -364,12 +365,17 @@ def view(api_client):
                 avg_rating = professor.get("average_rating", 0)
                 rating_count = professor.get("rating_count", 0)
                 prof_id = professor.get("id", "")
-                
-                # Round to nearest integer for display
-                rounded_rating = round(avg_rating)
-                
+
+                # Round to nearest integer for display using ceil and floor
+                # Normal round uses banker's rounding
+                if avg_rating - int(avg_rating) >= 0.5:
+                    avg_rating = math.ceil(avg_rating)
+                else:
+                    avg_rating = math.floor(avg_rating)
+
+
                 if rating_count > 0:
-                    star_display = f"{'★' * rounded_rating + '☆' * (5 - rounded_rating):<53}" 
+                    star_display = f"{'★' * avg_rating + '☆' * (5 - avg_rating):<53}" 
                     formatted_output.append(f"The rating of Professor {formatted_name} ({prof_id}) is {star_display}")
                 else:
                     formatted_output.append(f"Professor {formatted_name} ({prof_id}) doesn't have a rating")
@@ -417,9 +423,14 @@ def average(professor_id, module_code, api_client):
         elif avg_rating is None or rating_count == 0:
             print(f"Professor {formatted_name} ({prof_id}) has no ratings for {mod_desc} ({mod_code})")
         else:
-            # Round to nearest integer for display
-            stars = round(avg_rating)
-            output = f"The rating of Professor {formatted_name} ({prof_id}) in module {mod_desc} ({mod_code}) is:\n{'★' * stars + '☆' * (5 - stars)}"
+            # Round to nearest integer for display using ceil and floor
+            # Normal round uses banker's rounding
+            if avg_rating - int(avg_rating) >= 0.5:
+                avg_rating = math.ceil(avg_rating)
+            else:
+                avg_rating = math.floor(avg_rating)
+
+            output = f"The rating of Professor {formatted_name} ({prof_id}) in module {mod_desc} ({mod_code}) is:\n{'★' * avg_rating + '☆' * (5 - avg_rating)}"
             print(output)
     else:
         if "error" in response.get("data", {}):
