@@ -274,7 +274,6 @@ def view(request):
         avg_rating = 0
         if ratings.exists():
             avg_rating = sum(rating.stars for rating in ratings) / ratings.count()
-            avg_rating = round(avg_rating)
 
         # Make response
         professor_ratings.append({
@@ -355,7 +354,6 @@ def average(request):
     # Get average rating
     if rating_count > 0:
         avg_rating = sum_rating / rating_count
-        avg_rating = round(avg_rating)
 
     return Response({
         "professor": {
