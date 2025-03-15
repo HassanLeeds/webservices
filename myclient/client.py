@@ -199,7 +199,24 @@ def login(url, api_client):
 
     return False
 
-#  Invokes APIClient list function
+# Invokes APIClient logout function
+def logout(api_client):
+    response = api_client.logout()
+
+    if response.get("status_code") in [200, 204]:
+        print("Successfully logged out")
+    else:
+        error_message = "Logout completed with warning"
+
+        if isinstance(response.get('data'), dict) and 'error' in response.get('data', {}):
+            error_message = response.get('data', {}).get('error')
+        elif "error" in response:
+            error_message = response.get('error')
+
+        print(
+            f"WARNING: {error_message}, you've only been logged out locally")
+
+# Invokes APIClient list function
 def list_modules(api_client):
     response = api_client.list_modules()
 
@@ -471,7 +488,9 @@ def main():
         if not command:
             continue
 
-        if command[0] in ["q", "quit", "exit"]:
+        if command[0] in ["q", "quit"]:
+            if logged_in == True:
+
             print("Goodbye!")
             break
 
@@ -535,21 +554,7 @@ def main():
                 print("6) q/quit/exit: Exit the application")
 
             elif command[0] == "logout":
-                response = api_client.logout()
-
-                if response.get("status_code") in [200, 204]:
-                    print("Successfully logged out")
-                else:
-                    error_message = "Logout completed with warning"
-
-                    if isinstance(response.get('data'), dict) and 'error' in response.get('data', {}):
-                        error_message = response.get('data', {}).get('error')
-                    elif "error" in response:
-                        error_message = response.get('error')
-
-                    print(
-                        f"WARNING: {error_message}, you've only been logged out locally")
-
+                logout(api_client)
                 logged_in = False
 
             elif command[0] == "rate":
