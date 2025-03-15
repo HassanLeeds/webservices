@@ -29,7 +29,7 @@ class APIClient:
 
         response = self.make_request("post", url, json=data)
         return response
-    
+
     # Function to send login request to the server
     def login(self, url, username, password):
         data = {
@@ -38,7 +38,7 @@ class APIClient:
         }
 
         response = self.make_request("post", url, json=data)
-        
+
         try:
             token = response.get("data", {}).get("token")
         except AttributeError:
@@ -56,13 +56,13 @@ class APIClient:
     def logout(self):
         url = f"{self.base_url}/logout/"
         response = self.make_request("delete", url)
-        
+
         # clear local authentication data
         self.token = None
         self.username = None
         if "Authorization" in self.session.headers:
             self.session.headers.pop("Authorization")
-        
+
         return response
 
     # Function to send list request to the server
@@ -70,16 +70,16 @@ class APIClient:
         url = f"{self.base_url}/list/"
         response = self.make_request("get", url)
         return response
-    
+
     # Function to send new rating request to the server
-    def rate_professor(self, professor_id, module_code, year, semester, stars):
+    def rate_professor(self, professor_id, module_code, year, semester, rating):
         url = f"{self.base_url}/rate/"
         data = {
             "professor_id": professor_id,
             "module_code": module_code,
             "year": year,
             "semester": semester,
-            "stars": stars
+            "rating": rating
         }
         response = self.make_request("post", url, json=data)
         return response
@@ -104,12 +104,13 @@ class APIClient:
 
     # Function that builds and sends requests and receives responses
     def make_request(self, method, url, **kwargs):
-        
+
         try:
             # If we have a token but it's not in headers yet, add it
             if self.token and "Authorization" not in self.session.headers:
-                self.session.headers.update({"Authorization": f"Token {self.token}"})
-                
+                self.session.headers.update(
+                    {"Authorization": f"Token {self.token}"})
+
             response = self.session.request(method, url, **kwargs)
             result = {
                 "status_code": response.status_code,
@@ -135,21 +136,20 @@ class APIClient:
             }
 
 # Gets user input for registration and invokes APIClient registration function
-def register(api_client, verbose=False): 
+def register(api_client, verbose=False):
     # Get user input
     username = input("Enter username: ")
     email = input("Enter email: ")
     password = getpass.getpass("Enter password: ")
     confirm_password = getpass.getpass("Confirm password: ")
-    
+
     # Make sure password inputs match
     if password != confirm_password:
         print("ERROR: Passwords do not match.")
         return False
-    
+
     # Invoke registration request
     response = api_client.register(username, email, password)
-
 
     # Handle all responses and errors
 
@@ -170,7 +170,7 @@ def register(api_client, verbose=False):
     return False
 
 # Gets user input for login and invokes APIClient login function
-def login(url, api_client): 
+def login(url, api_client):
     username = input("Enter username: ")
     password = getpass.getpass("Enter password: ")
 
@@ -202,7 +202,7 @@ def login(url, api_client):
 #  Invokes APIClient list function
 def list_modules(api_client):
     response = api_client.list_modules()
-    
+
     # Handle all responses and errors
     if response.get("status_code") == 200:
         modules = response.get("data", {}).get("modules", [])
@@ -211,22 +211,22 @@ def list_modules(api_client):
         else:
             # Format the module data for user to see
             formatted_output = ["Modules List:\n"]
-            
+
             # Add header
             header = "│ {:<8} │ {:<30} │ {:<4} │ {:<8} │ {:<40} │".format(
                 "Code", "Name", "Year", "Semester", "Taught by")
             formatted_output.append(header)
-            
+
             for module in modules:
                 code = module["code"]
                 desc = module["description"][:30]  # Truncate long descriptions
                 year = module["year"]
                 sem = module["semester"]
                 professors = module["professors"]
-                
+
                 # Add separator line
                 formatted_output.append("-" * 105)
-                
+
                 if not professors:
                     # No professors for this module
                     row = "│ {:<8} │ {:<30} │ {:<4} │ {:<8} │ {:<40} │".format(
@@ -238,34 +238,34 @@ def list_modules(api_client):
                     first_prof_name = first_prof["name"]
                     first_prof_name_list = first_prof_name.split()
                     formatted_name = ""
-                    
+
                     # Format professor name (initials + last name)
                     for name in first_prof_name_list[:-1]:
                         formatted_name += name[0] + ". "
                     formatted_name += first_prof_name_list[-1]
-                    
+
                     prof_str = f"{first_prof['id']}, Professor {formatted_name}"
-                    
+
                     # First row with module details and first professor
                     row = "│ {:<8} │ {:<30} │ {:<4} │ {:<8} │ {:<40} │".format(
                         code, desc, year, sem, prof_str[:35])
                     formatted_output.append(row)
-                    
+
                     # Add additional professors on separate rows
                     for prof in professors[1:]:
                         prof_name = prof["name"]
                         prof_name_list = prof_name.split()
                         formatted_name = ""
-                        
+
                         for name in prof_name_list[:-1]:
                             formatted_name += name[0] + ". "
                         formatted_name += prof_name_list[-1]
-                        
+
                         prof_str = f"{prof['id']}, Professor {formatted_name}"
                         row = "│ {:<8} │ {:<30} │ {:<4} │ {:<8} │ {:<40} │".format(
                             "", "", "", "", prof_str[:35])
                         formatted_output.append(row)
-            
+
             print("\n".join(formatted_output)+"\n")
     else:
         if "error" in response.get("data", {}):
@@ -278,34 +278,34 @@ def list_modules(api_client):
             print("ERROR: Failed to retrieve modules")
 
 # Invokes APIClient rate_professor function using data from arguments
-def rate_professor(professor_id, module_code, year, semester, stars, api_client):
-    
+def rate_professor(professor_id, module_code, year, semester, rating, api_client):
+
     # Convert inputs to proper types
     try:
         year = int(year)
         semester = int(semester)
-        stars = int(stars)
+        rating = int(rating)
     except ValueError:
         # Server handles validation errors
         pass
-    
+
     # Create resonse JSON
     response = api_client.rate_professor(
         professor_id=professor_id,
         module_code=module_code,
         year=year,
         semester=semester,
-        stars=stars
+        rating=rating
     )
-    
+
     # Handle resoponse messages and errors
     if response.get("status_code") == 201:
-        # Format the response for client to see 
+        # Format the response for client to see
         data = response.get("data", {})
         professor = data.get("professor", {})
         module = data.get("module", {})
-        rating = data.get("stars", 0)
-        
+        rating = data.get("rating", 0)
+
         formatted_response = f"""
 -------------------------------------------------------------
                       RATING  SUBMITTED                           
@@ -321,48 +321,52 @@ def rate_professor(professor_id, module_code, year, semester, stars, api_client)
     else:
         # Check for the specific case of an already existing rating
         if response.get("status_code") == 400 and "existing_rating" in response.get("data", {}):
-            existing_rating = response.get("data", {}).get("existing_rating", 0)
-            error_message = response.get("data", {}).get("error", "You have already rated this professor in this module instance")
-            
+            existing_rating = response.get(
+                "data", {}).get("existing_rating", 0)
+            error_message = response.get("data", {}).get(
+                "error", "You have already rated this professor in this module instance")
+
             print(f"ERROR: {error_message}")
-            print(f"Your previous rating: {'★' * existing_rating + '☆' * (5 - existing_rating)}")
-            
+            print(
+                f"Your previous rating: {'★' * existing_rating + '☆' * (5 - existing_rating)}")
+
         else:
             error_message = "Rating submission failed"
-            
+
             if isinstance(response.get("data"), dict) and "error" in response.get("data", {}):
                 error_message = response.get("data", {}).get("error")
             elif "error" in response:
                 error_message = response.get("error")
-                
+
             print(f"ERROR: {error_message}")
 
 # Invokes APIClient view function
 def view(api_client):
-    # Invike view request
+    # Invoke view request
     response = api_client.view()
 
     # Handle all responses and error messages
     if response.get("status_code") == 200:
         professors = response.get("data", {}).get("professors", [])
-        
+
         if not professors:
             print("No professor ratings available")
         else:
             # Format the professor ratings for the user to see
             formatted_output = ["Professor Ratings:\n"]
-            
+
             for professor in professors:
-                # Format professor name (initials + last name)
+                # Format professor name
                 name = professor.get("name", "")
                 name_parts = name.split()
                 formatted_name = ""
-                
+
+                # Turn names into initials except last name
                 for part in name_parts[:-1]:
                     formatted_name += part[0] + ". "
                 formatted_name += name_parts[-1] if name_parts else ""
-                
-                avg_rating = professor.get("average_rating", 0)
+
+                avg_rating = professor.get("avg_rating", 0)
                 rating_count = professor.get("rating_count", 0)
                 prof_id = professor.get("id", "")
 
@@ -373,13 +377,14 @@ def view(api_client):
                 else:
                     avg_rating = math.floor(avg_rating)
 
-
                 if rating_count > 0:
-                    star_display = f"{'★' * avg_rating + '☆' * (5 - avg_rating):<53}" 
-                    formatted_output.append(f"The rating of Professor {formatted_name} ({prof_id}) is {star_display}")
+                    star_display = f"{'★' * avg_rating + '☆' * (5 - avg_rating):<53}"
+                    formatted_output.append(
+                        f"The rating of Professor {formatted_name} ({prof_id}) is {star_display}")
                 else:
-                    formatted_output.append(f"Professor {formatted_name} ({prof_id}) doesn't have a rating")
-            
+                    formatted_output.append(
+                        f"Professor {formatted_name} ({prof_id}) doesn't have a rating")
+
             print("\n".join(formatted_output))
     else:
         if "error" in response.get("data", {}):
@@ -402,26 +407,29 @@ def average(professor_id, module_code, api_client):
         professor = data.get("professor", {})
         module = data.get("module", {})
         teaches_module = data.get("teaches_module", False)
-        avg_rating = data.get("average_rating")
+        avg_rating = data.get("avg_rating")
         rating_count = data.get("rating_count", 0)
-        
+
         # Format professor name
         name = professor.get("name", "")
         name_parts = name.split()
         formatted_name = ""
-        
+
+        # Turn names into initials except last name
         for part in name_parts[:-1]:
             formatted_name += part[0] + ". "
         formatted_name += name_parts[-1] if name_parts else ""
-        
+
         prof_id = professor.get("id", "")
         mod_desc = module.get("description", "")
         mod_code = module.get("code", "")
-        
+
         if not teaches_module:
-            print(f"Professor {formatted_name} ({prof_id}) does not teach {mod_desc} ({mod_code})")
+            print(
+                f"Professor {formatted_name} ({prof_id}) does not teach {mod_desc} ({mod_code})")
         elif avg_rating is None or rating_count == 0:
-            print(f"Professor {formatted_name} ({prof_id}) has no ratings for {mod_desc} ({mod_code})")
+            print(
+                f"Professor {formatted_name} ({prof_id}) has no ratings for {mod_desc} ({mod_code})")
         else:
             # Round to nearest integer for display using ceil and floor
             # Normal round uses banker's rounding
@@ -442,23 +450,24 @@ def average(professor_id, module_code, api_client):
         else:
             print("ERROR: Failed to retrieve professor average rating")
 
+# Main function
 def main():
     # Initialize API client object
     api_client = APIClient(URL)
 
     print("Welcome to the professor rating client!\n")
     print("To exit the client type 'q' or 'quit'")
-    
+
     print("Type 'h' or 'help' for a list of available commands.\n")
     logged_in = False
-    
-    # Keep running until loop breaks
+
+    # Keep running until user exits
     while True:
         command = input("-> ")
 
         # Divide command into seperate arguments
         command = command.split()
-        
+
         if not command:
             continue
 
@@ -475,20 +484,21 @@ def main():
 
         elif command[0] == "average":
             if len(command) < 3:
-                print("Please use the command as following: 'average <professor_id> <module_code>'")
+                print(
+                    "Please use the command as following: 'average <professor_id> <module_code>'")
             else:
                 average(command[1], command[2], api_client)
 
-            
         elif not logged_in:
-            # Print help information
+            # Print help information for logged out users
             if command[0] in ["h", "help"]:
                 print("Available commands:")
                 print("1) register: Register a new user")
                 print("2) login <api_url>: Login to provided api using existing account")
                 print("3) list: List all modules and professors")
                 print("4) view: List ratings of all professors")
-                print("5) average <professor_id> <module_code>: Display average rating for a professor in a module")
+                print(
+                    "5) average <professor_id> <module_code>: Display average rating for a professor in a module")
                 print("6) q/quit/exit: Exit the application")
 
             # Register new user
@@ -503,52 +513,58 @@ def main():
                 else:
                     if command[1][-1] != "/":
                         command[1] = command[1] + "/"
-                    success = login(command[1],api_client)
+                    success = login(command[1], api_client)
                     if success:
                         logged_in = True
 
             else:
-                print("Invalid command: type 'h' or 'help' for a list of logged-in commands.")
-        
-        else:  # logged_in == True
-            # Print help information
+                print(
+                    "Invalid command: type 'h' or 'help' for a list of logged-in commands.")
+
+        elif logged_in == True:
+            # Print help information for logged in user
             if command[0] in ["h", "help"]:
                 print("Available commands:")
                 print("1) list: List all modules and professors")
-                print("2) average <professor_id> <module_code>: Display average rating for a professor in a module")
+                print(
+                    "2) average <professor_id> <module_code>: Display average rating for a professor in a module")
                 print("3) view: List ratings of all professors")
-                print("4) rate <professor_id> <module_code> <year> <semester> <rating>: Rate a professor for a specific module")
+                print(
+                    "4) rate <professor_id> <module_code> <year> <semester> <rating>: Rate a professor for a specific module")
                 print("5) logout: Log out of your account")
                 print("6) q/quit/exit: Exit the application")
 
-            
             elif command[0] == "logout":
                 response = api_client.logout()
-                
+
                 if response.get("status_code") in [200, 204]:
                     print("Successfully logged out")
                 else:
                     error_message = "Logout completed with warning"
-                    
+
                     if isinstance(response.get('data'), dict) and 'error' in response.get('data', {}):
                         error_message = response.get('data', {}).get('error')
                     elif "error" in response:
                         error_message = response.get('error')
-                        
-                    print(f"WARNING: {error_message}, you've only been logged out locally")
-                
+
+                    print(
+                        f"WARNING: {error_message}, you've only been logged out locally")
+
                 logged_in = False
 
             elif command[0] == "rate":
 
                 if len(command) < 6:
-                    print("Please use the command as following: 'rate <professor_id> <module_code> <year> <semester> <rating>'")
-                
+                    print(
+                        "Please use the command as following: 'rate <professor_id> <module_code> <year> <semester> <rating>'")
+
                 else:
-                    rate_professor(command[1], command[2], command[3], command[4], command[5], api_client)
+                    rate_professor(
+                        command[1], command[2], command[3], command[4], command[5], api_client)
 
             else:
-                print("Invalid command: type 'h' or 'help' for a list of logged-in commands.")
+                print(
+                    "Invalid command: type 'h' or 'help' for a list of logged-in commands.")
 
 
 if __name__ == "__main__":

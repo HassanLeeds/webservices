@@ -1,5 +1,5 @@
 AVAILABLE COMMANDS
------------------
+------------------
 
 Before Login:
 - register - Register a new user account
@@ -11,12 +11,12 @@ Before Login:
 - q or quit or exit - Exit the application
 
 After Login:
-All commands available before login (except login and register), with the following additions:
+- All previous commands (except login and register)
 - rate <professor_id> <module_code> <year> <semester> <rating> - Rate a professor for a specific module instance
 - logout - Log out from the current session
 
-COMMAND DETAILS
---------------
+COMMANDS DESCRIPTIONS
+---------------------
 
 register:
   Used to allow a user to register with the service using a username, email, and password.
@@ -50,19 +50,31 @@ rate:
   Example: rate HN1 SS1 2024 1 5
   Note: Rating must be an integer between 1-5
 
-PYTHONANYWHERE DOMAIN
---------------------
+DOMAIN
+------
 sc22hn.pythonanywhere.com
 
-API functions: /api/<function>/
+SUB-DOMAINS
+-----------
 Admin page: /admin/
 
-ADMIN ACCOUNT CREDENTIALS
-------------------------
+API functions:
+
+1) Register: /api/register/
+2) Login: /api/login/
+3) List: /api/list_modules/
+4) View: /api/view/
+5) Average: /api/average/
+6) Log-out: /api/logout/
+7) Rate: /api/rate/
+
+ADMIN CREDENTIALS
+-----------------
 Username: sc22hn
-Password: 1
+Password: 1 (Easy password for ease of testing)
 
 NOTES
 -----
 - Users must be logged in before they can submit ratings
 - Users can only rate a professor for a module instance once
+- '/' Automatically appended to URL in login function since it is required for post requests

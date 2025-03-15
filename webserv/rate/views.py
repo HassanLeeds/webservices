@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Professor, Module, Module_instance, Rating
+from .models import Professor, Module, ModuleInstance, Rating
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -29,6 +29,7 @@ def validate_password(password):
 
     return True, ""
 
+# Registration Function
 @api_view(["POST"])
 def register(request):
     data = request.data
@@ -36,19 +37,19 @@ def register(request):
     email = data.get("email")
     pw = data.get("password")
 
-    # Make sure all required data is present and validate 
+    # Make sure all required data is present and validate
     if not uname:
         return Response({"error": "Username is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     if not email:
         return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     if not validate_email(email):
         return Response({"error": "Invalid email format"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     if not pw:
         return Response({"error": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # Boolean to check validity of password and response message for invalid password
     valid_pw, pw_message = validate_password(pw)
     if not valid_pw:
@@ -80,13 +81,13 @@ def login(request):
 
     # Authenticate the user
     user = authenticate(username=uname, password=pw)
-    
+
     # Try to match credentials with a user
     if user is not None:
         # Generate or get an authentication token
         from rest_framework.authtoken.models import Token
         token, created = Token.objects.get_or_create(user=user)
-        
+
         return Response({
             "message": f"User {uname} logged-in successfully!",
             "token": token.key
@@ -111,20 +112,21 @@ def logout(request):
     except Token.DoesNotExist:
         return Response({"error": "Token not found"}, status=status.HTTP_404_NOT_FOUND)
 
+# Function to ist module information
 @api_view(["GET"])
 def list_modules(request):
     # Query all module instances with their associated modules and professors
-    module_instances = Module_instance.objects.all().select_related('module')
-    
+    module_instances = ModuleInstance.objects.all().select_related('module')
+
     # Prepare response data
     module_list = []
-    
+
     for instance in module_instances:
         # Get all professors teaching this module instance
         professors = instance.professor.all()
         prof_info = [{"id": prof.id, "name": prof.name} for prof in professors]
-        
-        # Format module data for response message
+
+        # Add module instance to list of modules for response message
         module_data = {
             "code": instance.module.code,
             "description": instance.module.desc,
@@ -133,7 +135,7 @@ def list_modules(request):
             "professors": prof_info
         }
         module_list.append(module_data)
-    
+
     return Response({
         "modules": module_list
     }, status=status.HTTP_200_OK)
@@ -144,104 +146,104 @@ def rate_professor(request):
     # Verify the user is authenticated
     if not request.user.is_authenticated:
         return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
-    
+
     data = request.data
     prof_id = data.get("professor_id")
     module_code = data.get("module_code")
     year = data.get("year")
     semester = data.get("semester")
-    # stars is the rating received in the request
-    stars = data.get("stars")
-    
+    rating = data.get("rating")
+
     # Validate request data
     if not prof_id:
         return Response({"error": "Professor ID is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     if not module_code:
         return Response({"error": "Module code is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # Make sure year is a valid integer
     if year is None:
         return Response({"error": "Year is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     try:
         year = int(year)
     except (ValueError, TypeError):
         return Response({"error": "Year must be a valid number"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # Make sure semester is 1 or 2
     if semester is None:
         return Response({"error": "Semester is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     try:
         semester = int(semester)
         if semester not in [1, 2]:
             return Response({"error": "Semester must be either 1 or 2"}, status=status.HTTP_400_BAD_REQUEST)
     except (ValueError, TypeError):
-        return Response({"error": "Semester must be either 1 or 2)"}, status=status.HTTP_400_BAD_REQUEST)
-    
+        return Response({"error": "Semester must be either 1 or 2"}, status=status.HTTP_400_BAD_REQUEST)
+
     # Make sure rating is and integer between 1 and 5
-    if stars is None:
+    if rating is None:
         return Response({"error": "Rating is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     try:
-        stars = int(stars)
-        if stars < 1 or stars > 5:
+        rating = int(rating)
+        if rating < 1 or rating > 5:
             return Response({"error": "Rating must be an integer between 1 and 5"}, status=status.HTTP_400_BAD_REQUEST)
     except (ValueError, TypeError):
-        return Response({"error": "Stars must be a valid number between 1 and 5"}, status=status.HTTP_400_BAD_REQUEST)
-    
+        return Response({"error": "Rating must be a an integer between 1 and 5"}, status=status.HTTP_400_BAD_REQUEST)
+
     # Find the professor
     try:
         professor = Professor.objects.get(id=prof_id)
     except Professor.DoesNotExist:
         return Response({"error": f"Professor with ID {prof_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-    
+
     # Find the module instance
     try:
         module = Module.objects.get(code=module_code)
-        module_instance = Module_instance.objects.get(module=module, year=year, sem=semester)
-        
+        module_instance = ModuleInstance.objects.get(
+            module=module, year=year, sem=semester)
+
         # Verify professor teaches the specified module instance
         if not module_instance.professor.filter(id=prof_id).exists():
             return Response(
                 {"error": f"Professor {prof_id} does not teach module {module_code} in year {year}, semester {semester}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-    
+
     # Verify that the module exists
     except Module.DoesNotExist:
         return Response({"error": f"Module with code {module_code} not found"}, status=status.HTTP_404_NOT_FOUND)
 
     # Verify that the module instance exists
-    except Module_instance.DoesNotExist:
+    except ModuleInstance.DoesNotExist:
         return Response(
             {"error": f"Module instance for {module_code} in year {year}, semester {semester} not found"},
             status=status.HTTP_404_NOT_FOUND
         )
-    
+
     # Check if the user has already rated this professor for this module instance
     existing_rating = Rating.objects.filter(
         user=request.user,
         professor=professor,
-        module=module_instance
+        module_instance=module_instance
     ).first()
-    
+
     if existing_rating:
         # User has already rated this professor for this module instance
         return Response({
             "error": f"You have already rated Professor {professor.name} for {module.desc} ({year}, semester {semester})",
-            "existing_rating": existing_rating.stars
+            "existing_rating": existing_rating.rating
         }, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # Create the rating
     rating = Rating.objects.create(
-        stars=stars,
+        rating=rating,
         professor=professor,
-        module=module_instance,
+        module_instance=module_instance,
         user=request.user
     )
-    
+
     # Return response data
     return Response({
         "professor": {
@@ -254,7 +256,7 @@ def rate_professor(request):
         },
         "year": year,
         "semester": semester,
-        "stars": stars,
+        "rating": rating,
         "message": f"Rating submitted successfully for Professor {professor.name}, Module {module.desc}"
     }, status=status.HTTP_201_CREATED)
 
@@ -263,26 +265,27 @@ def rate_professor(request):
 def view(request):
     # Query all professors
     professors = Professor.objects.all()
-    
+
     professor_ratings = []
-    
+
     for professor in professors:
         # Get all ratings for this professor
         ratings = Rating.objects.filter(professor=professor)
-        
+
         # Calculate average rating
         avg_rating = 0
         if ratings.exists():
-            avg_rating = sum(rating.stars for rating in ratings) / ratings.count()
+            avg_rating = sum(
+                rating.rating for rating in ratings) / ratings.count()
 
         # Make response
         professor_ratings.append({
             "id": professor.id,
             "name": professor.name,
-            "average_rating": avg_rating,
+            "avg_rating": avg_rating,
             "rating_count": ratings.count()
         })
-    
+
     return Response({
         "professors": professor_ratings
     }, status=status.HTTP_200_OK)
@@ -296,9 +299,9 @@ def average(request):
 
     # Make sure all request data exists
     if not prof_id:
-        return Response({"error": "Professor ID not provided"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Professor ID is required"}, status=status.HTTP_400_BAD_REQUEST)
     if not module_code:
-        return Response({"error": "Module code not provided"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Module code is required"}, status=status.HTTP_400_BAD_REQUEST)
 
     # Make sure the professor exists
     try:
@@ -311,17 +314,17 @@ def average(request):
         module = Module.objects.get(code=module_code)
     except Module.DoesNotExist:
         return Response({"error": f"Module with code {module_code} not found"}, status=status.HTTP_404_NOT_FOUND)
-    
+
     # Get all instance of the module
-    module_instances = Module_instance.objects.filter(module=module)
-    
+    module_instances = ModuleInstance.objects.filter(module=module)
+
     # Check if professor teaches this module
     teaches_module = False
     for module_instance in module_instances:
         if module_instance.professor.filter(id=prof_id).exists():
             teaches_module = True
             break
-    
+
     if not teaches_module and module_instances:
         return Response({
             "professor": {
@@ -333,7 +336,7 @@ def average(request):
                 "description": module.desc
             },
             "teaches_module": False,
-            "average_rating": None,
+            "avg_rating": None,
             "rating_count": 0
         }, status=status.HTTP_200_OK)
 
@@ -342,12 +345,13 @@ def average(request):
     sum_rating = 0
     # Number of ratings across all instances
     rating_count = 0
-    
+
     for module_instance in module_instances:
-        ratings = Rating.objects.filter(module=module_instance, professor=professor)
-        sum_rating += sum(rating.stars for rating in ratings)
+        ratings = Rating.objects.filter(
+            module_instance=module_instance, professor=professor)
+        sum_rating += sum(rating.rating for rating in ratings)
         rating_count += ratings.count()
-    
+
     # If no ratings return None as average rating
     avg_rating = None
 
@@ -365,6 +369,6 @@ def average(request):
             "description": module.desc
         },
         "teaches_module": teaches_module,
-        "average_rating": avg_rating,
+        "avg_rating": avg_rating,
         "rating_count": rating_count
     }, status=status.HTTP_200_OK)

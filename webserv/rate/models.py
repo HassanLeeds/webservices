@@ -16,10 +16,10 @@ class Module (models.Model):
     def __str__ (self):
         return self.desc
 
-class Module_instance (models.Model):
+class ModuleInstance (models.Model):
     professor = models.ManyToManyField(Professor)
     year = models.IntegerField()
-    sem = models.IntegerField(choices={1:"1",2:"2"}, null=True)
+    sem = models.IntegerField(choices=[(1, "1"), (2, "2")], null=True)
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
     
     def __str__ (self):
@@ -27,16 +27,15 @@ class Module_instance (models.Model):
 
 
 class Rating (models.Model):
-    stars = models.IntegerField(choices={1:"1", 2: "2", 3: "3", 4: "4", 5: "5"})
+    stars = models.IntegerField(choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")])
     professor = models.ForeignKey(Professor, on_delete=models.CASCADE)
-    module = models.ForeignKey(Module_instance, on_delete=models.PROTECT)
+    module_instance = models.ForeignKey(ModuleInstance, on_delete=models.PROTECT)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     
     class Meta:
-        unique_together = ('user', 'professor', 'module')
+        unique_together = ('user', 'professor', 'module_instance')
 
     def __str__ (self):
-        # module.module.code, because first module is actually module instance
-        return f"{self.module.module.code} {self.professor.id} {self.stars}"
+        return f"{self.module_instance.module.code} {self.professor.id} {self.stars}"
 
 
