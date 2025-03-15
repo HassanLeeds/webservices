@@ -27,7 +27,7 @@ class ModuleInstance (models.Model):
 
 
 class Rating (models.Model):
-    stars = models.IntegerField(choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")])
+    rating = models.IntegerField(choices=[(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")])
     professor = models.ForeignKey(Professor, on_delete=models.CASCADE)
     module_instance = models.ForeignKey(ModuleInstance, on_delete=models.PROTECT)
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True)
