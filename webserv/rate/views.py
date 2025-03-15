@@ -237,7 +237,7 @@ def rate_professor(request):
         }, status=status.HTTP_400_BAD_REQUEST)
 
     # Create the rating
-    rating = Rating.objects.create(
+    new_rating = Rating.objects.create(
         rating=rating,
         professor=professor,
         module_instance=module_instance,
