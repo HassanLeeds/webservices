@@ -489,8 +489,9 @@ def main():
             continue
 
         if command[0] in ["q", "quit"]:
+            # Logout user when quitting
             if logged_in == True:
-
+                logout(api_client)
             print("Goodbye!")
             break
 
@@ -551,7 +552,7 @@ def main():
                 print(
                     "4) rate <professor_id> <module_code> <year> <semester> <rating>: Rate a professor for a specific module")
                 print("5) logout: Log out of your account")
-                print("6) q/quit/exit: Exit the application")
+                print("6) q/quit/exit: Exit the application (Automatically logs you out before exit)")
 
             elif command[0] == "logout":
                 logout(api_client)
